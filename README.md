@@ -6,7 +6,9 @@ A centralized repository containing a curated research library and problem space
 
 - `sources/`: The raw PDF papers that comprise our rigorously verified, optimization-focused research library (31 curated sources) and the master `sources_index.md`.
 - `project_context/`: Extracted texts, framework notes, and planning documents outlining the socio-technical layers.
-- `scripts/`: Automation scripts used to systematically process library data (e.g., generating Markdown extraction tables). 
+- `scripts/`: Automation scripts used to systematically process library data.
+  - `extract_context.py`: Uses Gemini LLM to extract structured problem context directly from paper PDFs.
+  - `generate_context_extraction.py`: Generates the master Markdown extraction table from `sources/sources_index.md`.
 
 ## Evaluation: LLM-As-Judge Match Rate
 
