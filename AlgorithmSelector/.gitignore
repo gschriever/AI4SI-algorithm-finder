@@ -1,0 +1,5 @@
+# Local secrets and runtime artifacts
+.env
+data/
+__pycache__/
+.pytest_cache/

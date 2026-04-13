@@ -1,0 +1,14 @@
+required_checks:
+  - controllable_action
+  - measurable_objective
+  - expressible_constraints
+  - legitimate_target
+  - feasible_intervention
+status_rules:
+  not_optimisable:
+    - missing_controllable_action
+    - illegitimate_target
+  partially_optimisable:
+    - broad_social_goal_with_narrow_operational_subproblem
+  optimisable:
+    - clear_action_objective_constraints

@@ -1,0 +1,12 @@
+risk_prediction:
+  keywords: [risk, prioritize, triage, outreach, intervention]
+  methods: [logistic_regression, gradient_boosted_trees, survival_models]
+matching:
+  keywords: [match, assign, mentor, pairing, allocation]
+  methods: [integer_programming, min_cost_flow, rules_based_scoring]
+allocation:
+  keywords: [allocate, distribute, capacity, budget, staff]
+  methods: [linear_programming, integer_programming, rules_based_allocation]
+forecasting:
+  keywords: [forecast, demand, plan, weekly, inventory]
+  methods: [time_series_forecasting, probabilistic_forecasting, linear_programming]

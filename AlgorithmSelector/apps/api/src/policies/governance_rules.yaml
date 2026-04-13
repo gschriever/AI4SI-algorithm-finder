@@ -1,0 +1,19 @@
+veto_conditions:
+  - label: illegitimate_objective
+    when: objective_contains_illegitimate_terms
+    reason: Objective appears socially illegitimate.
+  - label: high_stakes_without_review
+    when: high_stakes_without_human_review
+    reason: High-stakes cases require human review.
+  - label: no_controllable_action
+    when: no_decision_variable
+    reason: No controllable action exists to optimise.
+downgrade_conditions:
+  - label: high_stakes_default
+    when: high_stakes_case
+    decision: decision_support_only
+    reason: High-stakes cases default to decision support.
+  - label: proxy_label_risk
+    when: proxy_label_with_risk
+    decision: decision_support_only
+    reason: Proxy label risk requires a more conservative recommendation mode.
