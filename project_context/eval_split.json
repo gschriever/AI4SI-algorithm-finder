@@ -1,0 +1,43 @@
+{
+  "seed": 42,
+  "test_size": 0.3,
+  "n_total": 31,
+  "n_train": 21,
+  "n_test": 10,
+  "train_case_ids": [
+    "paper_01",
+    "paper_02",
+    "paper_03",
+    "paper_04",
+    "paper_05",
+    "paper_08",
+    "paper_09",
+    "paper_10",
+    "paper_14",
+    "paper_17",
+    "paper_18",
+    "paper_19",
+    "paper_21",
+    "paper_22",
+    "paper_23",
+    "paper_24",
+    "paper_26",
+    "paper_27",
+    "paper_29",
+    "paper_30",
+    "paper_31"
+  ],
+  "test_case_ids": [
+    "paper_06",
+    "paper_07",
+    "paper_11",
+    "paper_12",
+    "paper_13",
+    "paper_15",
+    "paper_16",
+    "paper_20",
+    "paper_25",
+    "paper_28"
+  ],
+  "protocol": "Tune prompts, mappings, and judge settings on train only; report final match rate on test."
+}

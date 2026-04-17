@@ -1,0 +1,21 @@
+{
+  "n": 10,
+  "split": "test",
+  "split_file": "project_context/eval_split.json",
+  "case_ids": [
+    "paper_06",
+    "paper_07",
+    "paper_11",
+    "paper_12",
+    "paper_13",
+    "paper_15",
+    "paper_16",
+    "paper_20",
+    "paper_25",
+    "paper_28"
+  ],
+  "average_semantic_match_score": 0.1,
+  "binary_match_threshold": 0.75,
+  "binary_match_rate": 0.0,
+  "matches": 0
+}

@@ -1,0 +1,32 @@
+{
+  "n": 21,
+  "split": "train",
+  "split_file": "project_context/eval_split.json",
+  "case_ids": [
+    "paper_01",
+    "paper_02",
+    "paper_03",
+    "paper_04",
+    "paper_05",
+    "paper_08",
+    "paper_09",
+    "paper_10",
+    "paper_14",
+    "paper_17",
+    "paper_18",
+    "paper_19",
+    "paper_21",
+    "paper_22",
+    "paper_23",
+    "paper_24",
+    "paper_26",
+    "paper_27",
+    "paper_29",
+    "paper_30",
+    "paper_31"
+  ],
+  "average_semantic_match_score": 0.0,
+  "binary_match_threshold": 0.75,
+  "binary_match_rate": 0.0,
+  "matches": 0
+}
