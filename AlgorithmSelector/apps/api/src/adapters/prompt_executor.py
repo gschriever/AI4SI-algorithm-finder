@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 import json
+import logging
+import re
+import time
 from typing import Any, TypeVar
 
+import anthropic
+import google.generativeai as genai
+from google.api_core import exceptions
 import httpx
+import openai
 from pydantic import BaseModel
 
 from adapters.prompt_library import PromptLibrary
@@ -33,11 +40,39 @@ from models.problem_spec import (
 
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
+logger = logging.getLogger(__name__)
 
 class PromptExecutor:
     def __init__(self) -> None:
         self._timeout = settings.llm_timeout_seconds
         self._prompt_library = PromptLibrary()
+        
+        # Initialize Gemini
+        if settings.llm_api_key:
+            genai.configure(api_key=settings.llm_api_key)
+        
+        # Initialize Anthropic
+        self._anthropic_client = None
+        if settings.anthropic_api_key:
+            self._anthropic_client = anthropic.Anthropic(
+                api_key=settings.anthropic_api_key,
+                timeout=120.0
+            )
+        
+        # Initialize OpenAI
+        self._openai_client = None
+        if settings.openai_api_key:
+            self._openai_client = openai.OpenAI(api_key=settings.openai_api_key)
+
+    def _should_call_llm(self) -> bool:
+        if settings.llm_provider == "fixture":
+            return False
+        
+        if settings.llm_provider == "anthropic":
+            return bool(settings.anthropic_api_key)
+        if settings.llm_provider == "openai":
+            return bool(settings.openai_api_key)
+        return bool(settings.llm_api_key)
 
     def run_intake_diagnosis(self, narrative: str, prior_state: dict | None = None) -> IntakeDiagnosisResult:
         if not self._should_call_llm():
@@ -111,22 +146,111 @@ class PromptExecutor:
         return self._call_json_model(system_prompt, user_prompt, RecommendationPackage)
 
     def _call_json_model(self, system_prompt: str, user_prompt: str, model_type: type[ModelT]) -> ModelT:
-        payload = {
-            "model": settings.llm_model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": 0.2,
-            "response_format": {"type": "json_object"},
-        }
-        url = settings.llm_base_url.rstrip("/") + settings.llm_chat_completions_path
-        headers = self._build_headers()
-        with httpx.Client(timeout=self._timeout) as client:
-            response = client.post(url, headers=headers, json=payload)
-            response.raise_for_status()
-        content = self._extract_content(response.json())
-        return model_type.model_validate_json(content)
+        provider = settings.llm_provider.lower()
+        
+        if provider == "anthropic" and self._anthropic_client:
+            return self._call_anthropic(system_prompt, user_prompt, model_type)
+        if provider == "openai" and self._openai_client:
+            return self._call_openai(system_prompt, user_prompt, model_type)
+        return self._call_gemini(system_prompt, user_prompt, model_type)
+
+    def _call_gemini(self, system_prompt: str, user_prompt: str, model_type: type[ModelT]) -> ModelT:
+        model_name = settings.llm_model if "gemini" in settings.llm_model else "gemini-1.5-flash"
+        model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
+        
+        max_retries = 5
+        base_delay = 2.0
+        for i in range(max_retries):
+            try:
+                config = genai.types.GenerationConfig(temperature=0.2, response_mime_type="application/json")
+                response = model.generate_content(user_prompt, generation_config=config)
+                return model_type.model_validate_json(response.text)
+            except exceptions.ResourceExhausted:
+                if i < max_retries - 1:
+                    time.sleep(base_delay * (2**i))
+                    continue
+                raise
+            except Exception as e:
+                if i < max_retries-1:
+                    time.sleep(base_delay * (2**i))
+                    continue
+                raise
+        raise RuntimeError("Max retries exceeded for Gemini")
+
+    def _call_anthropic(self, system_prompt: str, user_prompt: str, model_type: type[ModelT]) -> ModelT:
+        max_retries = 5
+        base_delay = 2.0
+        
+        # Force JSON for Claude
+        json_instr = "\n\nCRITICAL: Respond ONLY with valid JSON. Do not include markdown fences or explanation."
+        
+        for i in range(max_retries):
+            try:
+                response = self._anthropic_client.messages.create(
+                    model=settings.llm_model,
+                    max_tokens=4096,
+                    temperature=0.2,
+                    system=system_prompt + json_instr,
+                    messages=[{"role": "user", "content": user_prompt}]
+                )
+                content = response.content[0].text.strip()
+                
+                # Robust JSON extraction
+                json_str = content
+                if "```json" in content:
+                    match = re.search(r"```json\s*\n?(.*?)\n?```", content, re.DOTALL)
+                    if match:
+                        json_str = match.group(1).strip()
+                elif "```" in content:
+                    match = re.search(r"```\s*\n?(.*?)\n?```", content, re.DOTALL)
+                    if match:
+                        json_str = match.group(1).strip()
+                else:
+                    # Fallback: Find anything between first '{' and last '}'
+                    match = re.search(r"(\{.*\})", content, re.DOTALL)
+                    if match:
+                        json_str = match.group(1).strip()
+
+                return model_type.model_validate_json(json_str)
+            except anthropic.RateLimitError:
+                if i < max_retries - 1:
+                    time.sleep(base_delay * (2**i))
+                    continue
+                raise
+            except Exception:
+                if i < max_retries - 1:
+                    time.sleep(base_delay * (2**i))
+                    continue
+                raise
+        raise RuntimeError("Max retries exceeded for Anthropic")
+
+    def _call_openai(self, system_prompt: str, user_prompt: str, model_type: type[ModelT]) -> ModelT:
+        max_retries = 3
+        base_delay = 2.0
+        
+        for i in range(max_retries):
+            try:
+                response = self._openai_client.chat.completions.create(
+                    model=settings.llm_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=0.2,
+                    response_format={"type": "json_object"}
+                )
+                return model_type.model_validate_json(response.choices[0].message.content)
+            except openai.RateLimitError:
+                if i < max_retries - 1:
+                    time.sleep(base_delay * (2**i))
+                    continue
+                raise
+            except Exception:
+                if i < max_retries - 1:
+                    time.sleep(base_delay * (2**i))
+                    continue
+                raise
+        raise RuntimeError("Max retries exceeded for OpenAI")
 
     def _build_headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}

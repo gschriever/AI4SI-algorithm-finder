@@ -4,9 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Algorithm Selector API"
     api_prefix: str = "/api"
-    llm_provider: str = "openai_compatible"
+    llm_provider: str = "anthropic"
     llm_api_key: str = ""
-    llm_model: str = "gpt-5-mini"
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""
+    llm_model: str = "claude-3-5-sonnet-latest"
     llm_base_url: str = "https://api.openai.com/v1"
     llm_chat_completions_path: str = "/chat/completions"
     llm_api_key_header: str = "Authorization"

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from models.governance import GovernanceDecision, RecommendationPackage
 from models.method_card import RankedMethods, ResearchEvidenceResult
@@ -8,6 +8,8 @@ from models.problem_spec import ProblemSpec
 
 
 class IntakeDiagnosisResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+    
     version: str = "1.0"
     social_goal: str
     decision_to_be_made: str
