@@ -136,7 +136,9 @@ class CoordinatorService:
         enriched_narrative = self._build_enriched_narrative(narrative, prior_state)
         diagnosis = self.diagnosis_service.validate(self.prompts.run_intake_diagnosis(enriched_narrative, prior_state))
         if not diagnosis.domain_hint:
-            inferred = self._infer_domain_hint(narrative)
+            inferred = self.prompts.run_domain_classification(enriched_narrative, diagnosis)
+            if not inferred:
+                inferred = self._infer_domain_hint(narrative)
             if inferred:
                 diagnosis = diagnosis.model_copy(update={"domain_hint": inferred})
         self.repo.save_stage(session_id, "01_intake_diagnosis", diagnosis)

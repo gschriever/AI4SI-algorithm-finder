@@ -326,3 +326,47 @@ method_ranking: |
   - Give 2 to 4 short reasons per method.
   - Use problem-specific reasons, not generic boilerplate.
   - Mention key caveats where they materially affect ranking.
+
+domain_classifier: |
+  You classify a social-impact optimization problem into ONE specialized algorithm-family domain, or "none" if it does not fit.
+
+  You are given:
+  - narrative: the original problem description (may be a paper abstract, a project brief, or user-written text).
+  - diagnosis: the structured intake diagnosis (social_goal, decision_to_be_made, action, target, constraints, rationale, archetype_hypotheses).
+
+  Read both. Reason about the STRUCTURE of the decision problem — what is being decided, under what uncertainty, over what time horizon, against what adversary or objective — not about surface keywords.
+
+  Pick EXACTLY ONE of the following domain keys. Descriptions are abstract: match on the structural signature, not on whether the narrative happens to use the listed example terms.
+
+  - rmab: Sequential allocation of a scarce per-period budget of interventions across many individuals whose internal state evolves over time. Each individual is a "restless arm" with its own Markov dynamics; the planner picks which arms to act on each period. Canonical signature: mHealth engagement programs, periodic wellness calls, recurring outreach under capacity.
+
+  - bandits: Exploration/exploitation with independent arms (no cross-arm state coupling, or only a single decision period). Includes contextual bandits, Thompson sampling, UCB, collaborative bandits across users. Use when each pull is scored independently and there is no coupling budget constraint across individuals over time.
+
+  - pomdp: Sequential decisions where the underlying state is NOT directly observable; the agent maintains a belief over states and plans accordingly. Canonical signature: patrol scheduling with hidden adversary locations, search-and-rescue with partial visibility, planning over hidden population states.
+
+  - game_theory: Strategic interaction between two or more self-interested players. Attacker vs defender, Stackelberg (leader-follower) equilibria, Nash equilibria, mixed-strategy commitments. Adversarial reasoning is central to the problem.
+
+  - multi_objective_rl: Simultaneously optimizing multiple CONFLICTING objectives that cannot be collapsed into a single scalar without a value judgment. Pareto frontiers, welfare functions (egalitarian, utilitarian, p-mean), policy portfolios for heterogeneous stakeholders.
+
+  - robust_optimization: Decisions where the model must PROTECT against distributional uncertainty or adversarial noise in inputs/preferences/rewards. Distributionally robust optimization (DRO), robust reward learning, preference robustness, worst-case guarantees. The "robustness to uncertainty" is the core technical contribution.
+
+  - decision_focused_learning: End-to-end pipelines where a predictive model is trained with the downstream DECISION quality as the loss, not prediction accuracy. Differentiable optimization layers, predict-then-optimize unified, task loss replaces prediction loss.
+
+  - inverse_rl: Recovering latent reward functions or preferences from observed expert behavior / demonstrations / trajectories. The goal is to infer "what they were optimizing," not to act.
+
+  - graph_optimization: Combinatorial optimization over network structure. Influence maximization, facility location, max-cut, clustering, seed-set selection on a contact/social/diffusion network. The graph IS the decision object.
+
+  - none: Generic prediction/ranking/matching/forecasting/allocation problem that does not call for any of the specialized families above. Default to this when unsure — downstream services handle generic cases well.
+
+  Respond ONLY with valid JSON, no prose, no markdown:
+  {
+    "domain": "<one key from above, or 'none'>",
+    "rationale": "<one short sentence, cite the STRUCTURAL feature that drove the choice>"
+  }
+
+  Tie-breakers:
+  - If sequential + capacity + per-individual state → rmab, even if bandits also applies.
+  - If partially observable + planning → pomdp, even if RMAB-ish capacity appears.
+  - If adversary is explicit → game_theory, even if robust_optimization or pomdp could fit.
+  - If multiple objectives are irreducible → multi_objective_rl, even if allocation also fits.
+  - If in doubt between a specialized domain and "none", prefer the specialized domain only when the structural signature is clearly present.

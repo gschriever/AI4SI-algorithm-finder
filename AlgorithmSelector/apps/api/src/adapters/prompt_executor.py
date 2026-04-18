@@ -42,6 +42,11 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
 
+
+class _DomainClassification(BaseModel):
+    domain: str
+    rationale: str = ""
+
 class PromptExecutor:
     def __init__(self) -> None:
         self._timeout = settings.llm_timeout_seconds
@@ -80,6 +85,24 @@ class PromptExecutor:
         system_prompt = self._prompt_library.get("intake_diagnosis")
         user_prompt = json.dumps({"narrative": narrative, "prior_state": prior_state or {}}, indent=2)
         return self._call_json_model(system_prompt, user_prompt, IntakeDiagnosisResult)
+
+    def run_domain_classification(self, narrative: str, diagnosis: IntakeDiagnosisResult) -> str | None:
+        if not self._should_call_llm():
+            return None
+        system_prompt = self._prompt_library.get("domain_classifier")
+        user_prompt = json.dumps(
+            {"narrative": narrative, "diagnosis": diagnosis.model_dump(mode="json")},
+            indent=2,
+        )
+        try:
+            result = self._call_json_model(system_prompt, user_prompt, _DomainClassification)
+        except Exception as exc:
+            logger.warning("Domain classification failed: %s", exc)
+            return None
+        domain = (result.domain or "").strip().lower()
+        if not domain or domain == "none":
+            return None
+        return domain
 
     def run_formalization(self, diagnosis: IntakeDiagnosisResult) -> ProblemSpec:
         if not self._should_call_llm():
