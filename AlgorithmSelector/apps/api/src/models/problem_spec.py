@@ -233,6 +233,7 @@ class ProblemSpec(RobustBaseModel):
     optimisability_status: OptimisabilityStatus = OptimisabilityStatus.OPTIMISABLE
     optimisability_rationale: list[str] = Field(default_factory=list)
     problem_type: ProblemType = ProblemType.ALLOCATION
+    domain_hint: str | None = None  # AI4SI domain: rmab, game_theory, dfl, multi_objective_rl, etc.
     optimisation_subproblem: str = "unknown"
     decision_variable: DecisionVariable = Field(default_factory=DecisionVariable)
     action_space: ActionSpace = Field(default_factory=ActionSpace)
@@ -260,32 +261,59 @@ class ProblemSpec(RobustBaseModel):
         if not isinstance(data, dict):
             return data
             
-        # Handle 'constraints' being a dict instead of a list
-        if isinstance(data.get("constraints"), dict):
-            constraints = []
-            for c_type, c_list in data["constraints"].items():
-                if isinstance(c_list, list):
-                    for c_item in c_list:
-                        if isinstance(c_item, dict):
-                            c_item["type"] = "hard" if "hard" in c_type.lower() else "soft"
-                            constraints.append(c_item)
-                        elif isinstance(c_item, str):
-                            constraints.append({"name": c_item[:50], "type": "hard", "description": c_item})
-            data["constraints"] = constraints
+        def flatten_dict_to_list(val: Any) -> list:
+            if isinstance(val, list):
+                return val
+            if isinstance(val, dict):
+                items = []
+                for k, v in val.items():
+                    if isinstance(v, list):
+                        for sub_v in v:
+                            if isinstance(sub_v, (dict, str)):
+                                items.append(sub_v)
+                    elif isinstance(v, (dict, str)):
+                        # If it's a dict, maybe it's the item itself
+                        items.append(v)
+                return items
+            return [val] if val else []
 
-        # Handle 'evaluation_metric' being a dict or object
-        if isinstance(data.get("evaluation_metric"), dict):
-            metrics = []
-            for k, v in data["evaluation_metric"].items():
-                metrics.append({"name": k, "type": "primary" if "primary" in k.lower() else "secondary", "description": str(v)})
-            data["evaluation_metric"] = metrics
+        # List fields to protect
+        list_fields = [
+            "constraints", 
+            "fairness_harm_constraints", 
+            "evaluation_metric", 
+            "required_data", 
+            "human_in_the_loop_requirements",
+            "optimisability_rationale",
+            "assumptions",
+            "missing_fields"
+        ]
 
-        # Handle 'required_data' being a dict
-        if isinstance(data.get("required_data"), dict):
-            data_list = []
-            for k, v in data["required_data"].items():
-                data_list.append({"name": k, "type": str(v)})
-            data["required_data"] = data_list
+        for field in list_fields:
+            if field in data and isinstance(data[field], dict):
+                data[field] = flatten_dict_to_list(data[field])
+
+        # Specialized handling for specific models if they were categorized
+        if "evaluation_metric" in data and isinstance(data["evaluation_metric"], list):
+            new_metrics = []
+            for m in data["evaluation_metric"]:
+                if isinstance(m, dict) and "name" not in m:
+                    # Likely a key-value pair from a flattened dict
+                    for k, v in m.items():
+                        new_metrics.append({"name": k, "type": "secondary", "description": str(v)})
+                else:
+                    new_metrics.append(m)
+            data["evaluation_metric"] = new_metrics
+
+        if "required_data" in data and isinstance(data["required_data"], list):
+            new_data = []
+            for d in data["required_data"]:
+                if isinstance(d, dict) and "name" not in d:
+                    for k, v in d.items():
+                        new_data.append({"name": k, "type": str(v)})
+                else:
+                    new_data.append(d)
+            data["required_data"] = new_data
 
         return data
 

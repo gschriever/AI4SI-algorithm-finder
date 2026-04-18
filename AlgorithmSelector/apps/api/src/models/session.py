@@ -20,6 +20,7 @@ class IntakeDiagnosisResult(BaseModel):
     candidate_optimisation_subproblem: str
     rationale: list[str] = Field(default_factory=list)
     archetype_hypotheses: list[str] = Field(default_factory=list)
+    domain_hint: str | None = None  # AI4SI domain: rmab, game_theory, dfl, multi_objective_rl, etc.
     missing_information: list[str] = Field(default_factory=list)
     confidence: str = "medium"
     assumptions: list[str] = Field(default_factory=list)

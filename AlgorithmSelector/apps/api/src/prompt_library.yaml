@@ -50,6 +50,7 @@ intake_diagnosis: |
   - candidate_optimisation_subproblem
   - rationale
   - archetype_hypotheses
+  - domain_hint (optional; set only if the problem has specialized structure)
   - missing_information
   - confidence
   - assumptions
@@ -60,6 +61,40 @@ intake_diagnosis: |
   - allocation
   - forecasting
   - mixed
+
+  Domain hint guidance (CRITICAL — Be aggressive about recognizing specialized domains):
+  
+  If the narrative contains any of these keywords or patterns, ALWAYS set domain_hint correspondingly:
+  
+  RMAB: Keywords "restless bandit", "Whittle index", "sequential scheduling", "sequential prioritization", "prioritize under capacity",
+         "engagement dynamics", "state transitions", "arms", "sequential decision". Also recognizes patterns like:
+         - "scheduling [intervention/call/visit/outreach] under capacity or time constraints"
+         - "sequential selection of beneficiaries/arms/items prioritized over time"
+         - "dynamic prioritization" or "ongoing resource allocation over time periods"
+         → SET domain_hint = "rmab" if ANY of these patterns or keywords appear
+  
+  Game theory: "Stackelberg", "Nash equilibrium", "security game", "patrol scheduling", "strategic adversary", "mixed strategy"
+         → SET domain_hint = "game_theory"
+  
+  Multi-objective RL: "Pareto", "welfare function", "egalitarian", "utilitarian", "multi-objective reinforcement learning", 
+                     "multi-stakeholder", "conflicting objectives", "portfolio of policies"
+         → SET domain_hint = "multi_objective_rl"
+  
+  Decision-Focused Learning: "end-to-end learning", "differentiable optimization", "decision-focused",  
+                             "predict-then-optimize", "gradient through optimizer", "joint training"
+         → SET domain_hint = "decision_focused_learning"
+  
+  Graph optimization: "facility location", "influence maximization", "network design", "combinatorial", "clustering", "max-cut"
+         → SET domain_hint = "graph_optimization"
+  
+  Inverse RL: "inverse reinforcement learning", "learning reward functions", "learning from expert behavior", "preference learning"
+         → SET domain_hint = "inverse_rl"
+  
+  Robust optimization: "robust optimization", "worst-case", "uncertainty", "distributionally robust", "adversarial robustness"
+         → SET domain_hint = "robust_optimization"
+  
+  If narrative matches MULTIPLE domains (e.g., RMAB + multi-objective), prefer RMAB > game_theory > others.
+  Always include domain_hint if ANY specialized pattern is recognized, even if archetype_hypotheses = ["matching"] or broader.
 
   Quality bar:
   - Prefer explicit operational wording over abstract policy language.
@@ -110,6 +145,8 @@ problem_formalizer: |
   - problem_summary: one concise sentence.
   - optimisability_status: must reflect the diagnosis and the actual clarity of the formalized problem.
   - optimisability_rationale: short list of reasons.
+  - problem_type: use the archetype from the diagnosis.
+  - domain_hint: IMPORTANT — preserve the domain_hint from the diagnosis (rmab, game_theory, dfl, etc.). This is critical for tailored method research.
   - optimisation_subproblem: the specific operational problem, not the broader mission.
   - decision_variable: what is being chosen.
   - action_space: what actions are feasible and how constrained they are.

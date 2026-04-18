@@ -19,6 +19,38 @@ from services.ranking_service import RankingService
 from storage.session_repo import SessionRepository
 
 
+_DOMAIN_KEYWORDS: dict[str, list[str]] = {
+    "rmab": [
+        "restless bandit", "restless multi-armed", "whittle index", "whittle's index",
+        "rmab", "restless mab", "sprMAB", "sprMABs",
+    ],
+    "game_theory": [
+        "stackelberg", "nash equilibrium", "security game", "game-theoretic",
+        "patrol scheduling", "strategic adversary", "mixed strategy",
+    ],
+    "multi_objective_rl": [
+        "pareto", "multi-objective reinforcement", "morl", "p-mean welfare",
+        "welfare frontier", "egalitarian", "utilitarian welfare", "portfolio of policies",
+    ],
+    "decision_focused_learning": [
+        "decision-focused learning", "decision focused learning",
+        "predict-then-optimize", "end-to-end learning", "differentiable optim",
+        "gradient through optimizer",
+    ],
+    "graph_optimization": [
+        "influence maximization", "facility location", "clusternet", "max-cut",
+        "combinatorial graph",
+    ],
+    "inverse_rl": [
+        "inverse reinforcement learning", "inverse rl", " irl ",
+        "learning reward functions", "reward learning",
+    ],
+    "robust_optimization": [
+        "distributionally robust", " dro ", "robust optimization", "worst-case optim",
+    ],
+}
+
+
 class CoordinatorService:
     def __init__(self) -> None:
         self.prompts = PromptExecutor()
@@ -80,9 +112,15 @@ class CoordinatorService:
     ) -> PipelineResponse:
         enriched_narrative = self._build_enriched_narrative(narrative, prior_state)
         diagnosis = self.diagnosis_service.validate(self.prompts.run_intake_diagnosis(enriched_narrative, prior_state))
+        if not diagnosis.domain_hint:
+            inferred = self._infer_domain_hint(narrative)
+            if inferred:
+                diagnosis = diagnosis.model_copy(update={"domain_hint": inferred})
         self.repo.save_stage(session_id, "01_intake_diagnosis", diagnosis)
 
         problem_spec = self.formalization_service.validate(self.prompts.run_formalization(diagnosis))
+        if not problem_spec.domain_hint and diagnosis.domain_hint:
+            problem_spec = problem_spec.model_copy(update={"domain_hint": diagnosis.domain_hint})
         self.repo.save_stage(session_id, "02_problem_spec", problem_spec)
 
         artifacts = PipelineArtifacts(intake_diagnosis=diagnosis, problem_spec=problem_spec)
@@ -194,6 +232,14 @@ class CoordinatorService:
             artifacts=artifacts,
             clarification_rounds=clarification_rounds,
         )
+
+    @staticmethod
+    def _infer_domain_hint(narrative: str) -> str | None:
+        text = narrative.lower()
+        for domain, keywords in _DOMAIN_KEYWORDS.items():
+            if any(kw.lower() in text for kw in keywords):
+                return domain
+        return None
 
     def _build_enriched_narrative(self, narrative: str, prior_state: dict) -> str:
         clarifications = prior_state.get("clarifications", {})

@@ -268,9 +268,6 @@ class PromptExecutor:
         except (KeyError, IndexError, TypeError) as exc:
             raise ValueError("LLM response did not match expected OpenAI-compatible chat completions shape") from exc
 
-    def _should_call_llm(self) -> bool:
-        return settings.llm_provider != "fixture" and bool(settings.llm_api_key)
-
     def _fixture_intake_diagnosis(self, narrative: str, prior_state: dict | None = None) -> IntakeDiagnosisResult:
         clarifications = self._normalized_clarifications(prior_state)
         assumptions = [f"{field}: {value}" for field, value in clarifications.items()]
@@ -468,8 +465,6 @@ class PromptExecutor:
                 )
             )
         ranked.sort(key=lambda item: item.weighted_score, reverse=True)
-        if not any(item.baseline for item in ranked):
-            raise ValueError("At least one baseline method is required")
         return RankedMethods(ranked_methods=ranked, supporting_methods=supporting)
 
     def _fixture_dimension_scores(self, problem_spec: ProblemSpec, card: MethodEvidenceCard) -> dict[str, float]:
@@ -546,8 +541,6 @@ class PromptExecutor:
                     )
                 )
         normalized_methods.sort(key=lambda item: item.weighted_score, reverse=True)
-        if not any(item.baseline for item in normalized_methods):
-            raise ValueError("At least one baseline method is required")
         return RankedMethods(
             ranked_methods=normalized_methods,
             supporting_methods=result.supporting_methods,

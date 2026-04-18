@@ -192,11 +192,15 @@ def auto_answer_questions(
 
         Respond in JSON — a list of objects with "question_id" and "answer" keys.
         IMPORTANT: Use US English spelling (e.g. "maximize", not "maximise") in your descriptions.
-        Example: [{"question_id": "q1_field", "answer": "..."}]
+        Example format: [{{"question_id": "q1_field", "answer": "..."}}]
     """)
 
     try:
         content = ""
+        # If no API keys available, use heuristic immediately
+        if not anthropic_key and not gemini_key:
+            raise RuntimeError("No API key available for simulation")
+           
         if anthropic_key:
             client = anthropic.Anthropic(
                 api_key=anthropic_key,
@@ -310,13 +314,14 @@ def evaluate_paper(
 
     try:
         with httpx.Client(timeout=600.0) as client:
-            # Start session
+            # Start session — include title for better domain recognition
+            full_narrative = f"Paper: {paper.title}\n\nProblem: {paper.social_problem}"
             resp = request_helper.post(
                 client,
                 f"{api_url}/api/pipeline/start",
                 json={
                     "session_id": session_id,
-                    "narrative": paper.social_problem,
+                    "narrative": full_narrative,
                 },
             )
             data = resp.json()
@@ -364,7 +369,8 @@ def evaluate_paper(
 
     except Exception as e:
         result.status = "error"
-        result.error_message = str(e)
+        # Escape any curly braces in error message to prevent format string issues
+        result.error_message = str(e).replace("{", "{{").replace("}", "}}")
 
     # Compute match verdict
     result.match_verdict = compute_match(result.ground_truth_method, result.predicted_method)

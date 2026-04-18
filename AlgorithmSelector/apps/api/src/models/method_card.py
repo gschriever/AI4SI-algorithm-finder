@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class Citation(BaseModel):
@@ -52,3 +54,18 @@ class RankedMethods(BaseModel):
     supporting_methods: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
     missing_fields: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_supporting_methods(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            sm = data.get("supporting_methods")
+            if isinstance(sm, list):
+                coerced = []
+                for item in sm:
+                    if isinstance(item, dict):
+                        coerced.append(item.get("method") or item.get("name") or str(item))
+                    else:
+                        coerced.append(str(item))
+                data["supporting_methods"] = coerced
+        return data
