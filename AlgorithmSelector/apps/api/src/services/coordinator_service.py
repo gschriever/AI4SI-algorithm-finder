@@ -20,33 +20,56 @@ from storage.session_repo import SessionRepository
 
 
 _DOMAIN_KEYWORDS: dict[str, list[str]] = {
-    "rmab": [
-        "restless bandit", "restless multi-armed", "whittle index", "whittle's index",
-        "rmab", "restless mab", "sprMAB", "sprMABs",
+    "pomdp": [
+        "partially observable", "pomdp", "belief state", "partially-observable",
     ],
-    "game_theory": [
-        "stackelberg", "nash equilibrium", "security game", "game-theoretic",
-        "patrol scheduling", "strategic adversary", "mixed strategy",
+    "robust_optimization": [
+        "distributionally robust", " dro ", "robust optimization", "worst-case optim",
+        "robust reward", "noisy preference", "preference robustness",
+        "preference noise", "uncertainty in preference", "worst-case guarantee",
+        "conservative under uncertainty",
     ],
-    "multi_objective_rl": [
-        "pareto", "multi-objective reinforcement", "morl", "p-mean welfare",
-        "welfare frontier", "egalitarian", "utilitarian welfare", "portfolio of policies",
+    "inverse_rl": [
+        "inverse reinforcement learning", "inverse rl", " irl ",
+        "learning reward functions", "reward learning",
+        "expert demonstration", "expert trajectories", "recover reward",
     ],
     "decision_focused_learning": [
         "decision-focused learning", "decision focused learning",
         "predict-then-optimize", "end-to-end learning", "differentiable optim",
         "gradient through optimizer",
+        "end-to-end differentiable", "decision-aware", "two-stage pipeline",
+        "jointly train", "downstream task loss",
+    ],
+    "multi_objective_rl": [
+        "pareto", "multi-objective reinforcement", "morl", "p-mean welfare",
+        "welfare frontier", "egalitarian", "utilitarian welfare", "portfolio of policies",
+        "multi-stakeholder", "conflicting priorit", "conflicting objective",
+        "fairly distribut", "heterogeneous population", "welfare function",
+        "social welfare",
+    ],
+    "game_theory": [
+        "stackelberg", "nash equilibrium", "security game", "game-theoretic",
+        "patrol scheduling", "strategic adversary", "mixed strategy",
+        "adversary modeling", "green security", "attacker", "defender",
+    ],
+    "rmab": [
+        "restless bandit", "restless multi-armed", "whittle index", "whittle's index",
+        "rmab", "restless mab", "sprMAB", "sprMABs",
+        "sequential outreach", "beneficiary engagement", "maternal mobile health",
+        "intervention scheduling", "mhealth engagement", "long-term engagement",
+        "armman", "saheli", "health worker outreach",
+    ],
+    "bandits": [
+        "multi-armed bandit", "stochastic bandit", "thompson sampling",
+        "collaborative bandit", "contextual bandit", " ucb ", "upper confidence bound",
+        "exploration-exploitation", "gittins index", " mab ",
     ],
     "graph_optimization": [
         "influence maximization", "facility location", "clusternet", "max-cut",
         "combinatorial graph",
-    ],
-    "inverse_rl": [
-        "inverse reinforcement learning", "inverse rl", " irl ",
-        "learning reward functions", "reward learning",
-    ],
-    "robust_optimization": [
-        "distributionally robust", " dro ", "robust optimization", "worst-case optim",
+        "social network", "seed set", "diffusion process", "contact network",
+        "network-based", "frontier exploration",
     ],
 }
 

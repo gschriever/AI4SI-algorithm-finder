@@ -447,12 +447,13 @@ def compute_match(ground_truth: str, predicted: str | None) -> str:
 # 5. Reporting
 # ---------------------------------------------------------------------------
 
-def print_results(results: list[EvalResult], output_path: Path | None = None):
+def print_results(results: list[EvalResult], output_path: Path | None = None, split: str = "all"):
     """Print a summary table and accuracy metrics."""
     lines: list[str] = []
 
     lines.append("# AI4SI Algorithm Selector — Evaluation Results")
     lines.append(f"\n**Evaluated**: {len(results)} papers")
+    lines.append(f"**Split**: {split}")
     lines.append(f"**Date**: {time.strftime('%Y-%m-%d %H:%M')}")
     lines.append("")
 
@@ -554,6 +555,16 @@ def main():
         "--delay", type=float, default=5.0,
         help="Delay in seconds between papers to avoid rate limiting (default: 5.0)",
     )
+    parser.add_argument(
+        "--split-file", type=Path,
+        default=Path(__file__).resolve().parent.parent / "project_context" / "eval_split.json",
+        help="Path to eval_split.json with train/test case IDs.",
+    )
+    parser.add_argument(
+        "--split", choices=["train", "test", "all"], default="all",
+        help="Restrict evaluation to train or test split (default: all). "
+             "Use 'train' during development; reserve 'test' for final reporting.",
+    )
     args = parser.parse_args()
 
     # Parse ground truth
@@ -562,6 +573,22 @@ def main():
         sys.exit(1)
 
     papers = parse_context_extraction(args.context_file)
+
+    # Apply split filter if requested
+    if args.split != "all":
+        if not args.split_file.exists():
+            print(f"Error: --split={args.split} requires {args.split_file} (run scripts/split_gold_labels.py).", file=sys.stderr)
+            sys.exit(1)
+        split_data = json.loads(args.split_file.read_text(encoding="utf-8"))
+        allowed_ids = set(split_data[f"{args.split}_case_ids"])
+        filtered = []
+        for i, paper in enumerate(papers, 1):
+            case_id = f"paper_{i:02d}"
+            if case_id in allowed_ids:
+                filtered.append(paper)
+        papers = filtered
+        print(f"🔒 Restricted to {args.split} split: {len(papers)} papers.", file=sys.stderr)
+
     if args.limit:
         papers = papers[: args.limit]
 
@@ -599,7 +626,7 @@ def main():
         
         # Save incremental results
         if args.output:
-            print_results(results, args.output)
+            print_results(results, args.output, split=args.split)
 
         if i < len(papers) and args.delay > 0:
             time.sleep(args.delay)

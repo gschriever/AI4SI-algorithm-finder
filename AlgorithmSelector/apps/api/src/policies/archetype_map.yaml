@@ -10,3 +10,30 @@ allocation:
 forecasting:
   keywords: [forecast, demand, plan, weekly, inventory]
   methods: [time_series_forecasting, probabilistic_forecasting, linear_programming]
+sequential_resource_allocation:
+  keywords: [sequential, mhealth, maternal, beneficiary, engagement]
+  methods: [restless_bandits, contextual_bandits, whittle_index, decision_focused_learning]
+multi_armed_bandit:
+  keywords: [personalization, exploration, bandit, thompson]
+  methods: [contextual_bandits, thompson_sampling, upper_confidence_bound, collaborative_bandits]
+security_game:
+  keywords: [adversary, attacker, defender, green security]
+  methods: [stackelberg_games, mixed_integer_programming, nash_equilibrium]
+multi_objective_optimization:
+  keywords: [multi-objective, welfare, stakeholder, egalitarian, pareto]
+  methods: [multi_objective_reinforcement_learning, social_welfare_optimization, policy_portfolio]
+robust_preference_learning:
+  keywords: [robust reward, preference, noisy, uncertain]
+  methods: [distributionally_robust_optimization, direct_preference_optimization, stackelberg_games]
+differentiable_optimization:
+  keywords: [differentiable, end-to-end, jointly, predict-then-optimize]
+  methods: [decision_focused_learning, predict_then_optimize, inverse_optimization]
+network_optimization:
+  keywords: [influence, network, seed set, diffusion, contact network]
+  methods: [influence_maximization, graph_clustering, pomdp_planning]
+partially_observable:
+  keywords: [partially observable, pomdp, belief state]
+  methods: [pomdp_planning, belief_state_rl, heuristic_search]
+inverse_reward_learning:
+  keywords: [inverse rl, expert demonstration, recover reward]
+  methods: [inverse_rl, reward_recovery]
